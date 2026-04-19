@@ -1,36 +1,25 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Loader2, Sparkles, Settings2, Trash2, Code2, User } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-}
+interface Message { id: string; role: 'user' | 'assistant'; content: string; }
 
-const DEMO_RESPONSES: Record<string, string> = {
+const DEMO: Record<string, string> = {
   'default': `def process_data(data):
     """Process and validate input data."""
     if not isinstance(data, list):
         raise TypeError("Expected a list")
-    
     results = []
     for item in data:
         if item is not None:
             results.append(str(item).strip())
-    
     return sorted(results)`,
-  'hello': `# Hello! I'm Scratch, a 49M parameter GPT model
-# trained from scratch on Python code.
-# I can generate code-like patterns, but I don't
-# truly understand logic — I'm a demonstration
-# of Transformer architecture, not a production model.
+  'hello': `# I'm scratch — a 49M parameter model trained on Python code.
+# I generate code-like patterns but don't understand logic.
 
 def greet(name: str) -> str:
-    return f"Hello, {name}! Welcome to Scratch."`,
+    return f"Hello, {name}!"`,
   'sort': `def bubble_sort(arr):
     n = len(arr)
     for i in range(n):
@@ -42,31 +31,25 @@ def greet(name: str) -> str:
     def __init__(self, config=None):
         self.config = config or {}
         self._cache = {}
-        self._initialized = False
-    
+
     def initialize(self):
-        """Initialize the processor."""
-        if self._initialized:
-            return
         self._load_config()
-        self._initialized = True
-    
+
     def _load_config(self):
         for key, value in self.config.items():
             setattr(self, key, value)
-    
+
     def process(self, data):
-        if not self._initialized:
-            self.initialize()
+        self.initialize()
         return self._transform(data)`,
 };
 
-function getDemoResponse(prompt: string): string {
-  const lower = prompt.toLowerCase();
-  if (lower.includes('hello') || lower.includes('hi')) return DEMO_RESPONSES['hello'];
-  if (lower.includes('sort')) return DEMO_RESPONSES['sort'];
-  if (lower.includes('class')) return DEMO_RESPONSES['class'];
-  return DEMO_RESPONSES['default'];
+function getDemo(prompt: string): string {
+  const l = prompt.toLowerCase();
+  if (l.includes('hello') || l.includes('hi')) return DEMO['hello'];
+  if (l.includes('sort')) return DEMO['sort'];
+  if (l.includes('class')) return DEMO['class'];
+  return DEMO['default'];
 }
 
 export default function PlaygroundPage() {
@@ -77,287 +60,194 @@ export default function PlaygroundPage() {
   const [maxTokens, setMaxTokens] = useState(200);
   const [showSettings, setShowSettings] = useState(false);
   const [apiConnected, setApiConnected] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
-    // Check if inference API is available
     fetch(`${apiUrl}/health`).then(() => setApiConnected(true)).catch(() => setApiConnected(false));
   }, [apiUrl]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-  const saveToSupabase = async (userMsg: string, assistantMsg: string) => {
+  const save = async (u: string, a: string) => {
     if (!isSupabaseConfigured() || !supabase) return;
     try {
-      const { data: conv } = await supabase
-        .from('conversations')
-        .insert({ title: userMsg.slice(0, 50) })
-        .select()
-        .single();
-      
-      if (conv) {
-        await supabase.from('messages').insert([
-          { conversation_id: conv.id, role: 'user', content: userMsg },
-          { conversation_id: conv.id, role: 'assistant', content: assistantMsg },
-        ]);
-      }
-    } catch (e) {
-      console.log('Supabase not configured, skipping save');
-    }
+      const { data: c } = await supabase.from('conversations').insert({ title: u.slice(0, 50) }).select().single();
+      if (c) await supabase.from('messages').insert([
+        { conversation_id: c.id, role: 'user', content: u },
+        { conversation_id: c.id, role: 'assistant', content: a },
+      ]);
+    } catch { /* skip */ }
   };
 
-  const handleSubmit = async (e?: React.FormEvent) => {
+  const submit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!input.trim() || loading) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input.trim(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const um: Message = { id: Date.now().toString(), role: 'user', content: input.trim() };
+    setMessages((p) => [...p, um]);
     setInput('');
     setLoading(true);
-
-    let response = '';
-
+    let res = '';
     try {
       if (apiConnected) {
-        const res = await fetch(`${apiUrl}/generate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            prompt: userMessage.content,
-            max_tokens: maxTokens,
-            temperature,
-          }),
+        const r = await fetch(`${apiUrl}/generate`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: um.content, max_tokens: maxTokens, temperature }),
         });
-        const data = await res.json();
-        response = data.generated_text || data.text || 'Error generating response';
+        const d = await r.json();
+        res = d.generated_text || 'Error';
       } else {
-        // Demo mode - simulate typing delay
-        await new Promise((r) => setTimeout(r, 800 + Math.random() * 1200));
-        response = getDemoResponse(userMessage.content);
+        await new Promise((r) => setTimeout(r, 600 + Math.random() * 800));
+        res = getDemo(um.content);
       }
-    } catch {
-      response = getDemoResponse(userMessage.content);
-    }
-
-    const assistantMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      role: 'assistant',
-      content: response,
-    };
-
-    setMessages((prev) => [...prev, assistantMessage]);
+    } catch { res = getDemo(um.content); }
+    const am: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: res };
+    setMessages((p) => [...p, am]);
     setLoading(false);
-
-    saveToSupabase(userMessage.content, response);
+    save(um.content, res);
   };
 
-  const clearChat = () => {
-    setMessages([]);
-  };
+  const onKey = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
+  const card: React.CSSProperties = { backgroundColor: '#141414', border: '1px solid #1e1e1e', borderRadius: '10px' };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 56px)' }}>
+
       {/* Header */}
-      <div className="border-b border-white/5 px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold">Playground</h1>
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-              apiConnected 
-                ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
-                : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${apiConnected ? 'bg-green-400' : 'bg-yellow-400'}`} />
-              {apiConnected ? 'Live Model' : 'Demo Mode'}
+      <div style={{ borderBottom: '1px solid #1e1e1e', padding: '12px 24px' }}>
+        <div style={{ maxWidth: '720px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>playground</span>
+            <span style={{
+              fontSize: '11px', padding: '2px 8px', borderRadius: '4px',
+              border: `1px solid ${apiConnected ? 'rgba(34,197,94,0.3)' : '#333'}`,
+              color: apiConnected ? '#22c55e' : '#737373',
+            }}>
+              {apiConnected ? 'live' : 'demo'}
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all"
-            >
-              <Settings2 size={18} />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={() => setShowSettings(!showSettings)}
+              style={{ background: 'none', border: 'none', color: '#525252', cursor: 'pointer', fontSize: '13px' }}>
+              ⚙
             </button>
-            <button
-              onClick={clearChat}
-              className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-400/5 transition-all"
-            >
-              <Trash2 size={18} />
+            <button onClick={() => setMessages([])}
+              style={{ background: 'none', border: 'none', color: '#525252', cursor: 'pointer', fontSize: '13px' }}>
+              🗑
             </button>
           </div>
         </div>
       </div>
 
-      {/* Settings panel */}
-      <AnimatePresence>
-        {showSettings && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="border-b border-white/5 overflow-hidden"
-          >
-            <div className="max-w-4xl mx-auto px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-sm text-gray-400 mb-2 block">Temperature: {temperature}</label>
-                <input
-                  type="range"
-                  min="0.1"
-                  max="1.5"
-                  step="0.1"
-                  value={temperature}
-                  onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                  className="w-full accent-cyan-400"
-                />
-                <div className="flex justify-between text-xs text-gray-600 mt-1">
-                  <span>Focused</span>
-                  <span>Creative</span>
-                </div>
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 mb-2 block">Max Tokens: {maxTokens}</label>
-                <input
-                  type="range"
-                  min="50"
-                  max="500"
-                  step="50"
-                  value={maxTokens}
-                  onChange={(e) => setMaxTokens(parseInt(e.target.value))}
-                  className="w-full accent-cyan-400"
-                />
-                <div className="flex justify-between text-xs text-gray-600 mt-1">
-                  <span>Short</span>
-                  <span>Long</span>
-                </div>
-              </div>
+      {/* Settings */}
+      {showSettings && (
+        <div style={{ borderBottom: '1px solid #1e1e1e', padding: '16px 24px' }}>
+          <div style={{ maxWidth: '720px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+            <div>
+              <label style={{ fontSize: '12px', color: '#525252', display: 'block', marginBottom: '6px' }}>
+                temperature: {temperature}
+              </label>
+              <input type="range" min="0.1" max="1.5" step="0.1" value={temperature}
+                onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                style={{ width: '100%', accentColor: '#22c55e' }} />
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <div>
+              <label style={{ fontSize: '12px', color: '#525252', display: 'block', marginBottom: '6px' }}>
+                max tokens: {maxTokens}
+              </label>
+              <input type="range" min="50" max="500" step="50" value={maxTokens}
+                onChange={(e) => setMaxTokens(parseInt(e.target.value))}
+                style={{ width: '100%', accentColor: '#22c55e' }} />
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-6 py-6">
+      {/* Messages */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '24px' }}>
           {messages.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center mx-auto mb-6">
-                <Sparkles size={28} className="text-cyan-400" />
-              </div>
-              <h2 className="text-2xl font-bold mb-3">Start a conversation</h2>
-              <p className="text-gray-500 mb-8 max-w-md mx-auto">
-                Type a Python code prompt and see what Scratch generates. Try function signatures, class definitions, or comments.
+            <div style={{ paddingTop: '80px' }}>
+              <p style={{ fontSize: '14px', color: '#525252', marginBottom: '20px' }}>
+                Type a Python prompt. The model generates code-like completions.
               </p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {[
-                  'def fibonacci(n):',
-                  'class HTTPServer:',
-                  '# Sort a list of numbers',
-                  'hello',
-                ].map((prompt) => (
-                  <button
-                    key={prompt}
-                    onClick={() => { setInput(prompt); inputRef.current?.focus(); }}
-                    className="px-4 py-2 rounded-xl glass text-sm text-gray-400 hover:text-cyan-400 hover:border-cyan-400/20 transition-all"
-                  >
-                    {prompt}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {['def fibonacci(n):', 'class HTTPServer:', '# sort a list', 'hello'].map((p) => (
+                  <button key={p} onClick={() => { setInput(p); inputRef.current?.focus(); }}
+                    style={{
+                      padding: '8px 14px', border: '1px solid #1e1e1e', borderRadius: '8px',
+                      fontSize: '13px', color: '#737373', backgroundColor: 'transparent', cursor: 'pointer',
+                      fontFamily: "'JetBrains Mono', monospace",
+                    }}>
+                    {p}
                   </button>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {messages.map((msg) => (
-                <motion.div
-                  key={msg.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}
-                >
-                  {msg.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center flex-shrink-0 mt-1">
-                      <Code2 size={16} className="text-white" />
-                    </div>
-                  )}
-                  <div className={`max-w-[80%] rounded-2xl px-5 py-4 ${
-                    msg.role === 'user'
-                      ? 'bg-cyan-500/10 border border-cyan-500/20 text-gray-200'
-                      : 'glass'
-                  }`}>
-                    <pre className="text-sm font-mono whitespace-pre-wrap leading-relaxed text-gray-300">
+                <div key={msg.id} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                  <div style={{
+                    ...card, padding: '14px 18px', maxWidth: '85%',
+                    backgroundColor: msg.role === 'user' ? '#1a1a1a' : '#141414',
+                  }}>
+                    {msg.role === 'assistant' && (
+                      <div style={{ fontSize: '10px', color: '#525252', marginBottom: '8px', fontFamily: "'JetBrains Mono', monospace" }}>
+                        scratch
+                      </div>
+                    )}
+                    <pre style={{
+                      fontSize: '13px', fontFamily: "'JetBrains Mono', monospace",
+                      whiteSpace: 'pre-wrap', lineHeight: 1.7, color: '#ccc', margin: 0,
+                    }}>
                       {msg.content}
                     </pre>
                   </div>
-                  {msg.role === 'user' && (
-                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-1">
-                      <User size={16} className="text-gray-400" />
-                    </div>
-                  )}
-                </motion.div>
+                </div>
               ))}
-
               {loading && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                    <Code2 size={16} className="text-white" />
+                <div style={{ ...card, padding: '14px 18px', width: 'fit-content' }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <span className="typing-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#525252' }} />
+                    <span className="typing-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#525252' }} />
+                    <span className="typing-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#525252' }} />
                   </div>
-                  <div className="glass rounded-2xl px-5 py-4">
-                    <div className="flex gap-1.5">
-                      <span className="typing-dot w-2 h-2 rounded-full bg-cyan-400" />
-                      <span className="typing-dot w-2 h-2 rounded-full bg-cyan-400" />
-                      <span className="typing-dot w-2 h-2 rounded-full bg-cyan-400" />
-                    </div>
-                  </div>
-                </motion.div>
+                </div>
               )}
-              <div ref={messagesEndRef} />
+              <div ref={endRef} />
             </div>
           )}
         </div>
       </div>
 
-      {/* Input bar */}
-      <div className="border-t border-white/5 p-4">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
-          <div className="glass rounded-2xl flex items-end gap-2 p-2">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type a Python prompt... (e.g. def binary_search(arr, target):)"
+      {/* Input */}
+      <div style={{ borderTop: '1px solid #1e1e1e', padding: '16px 24px' }}>
+        <form onSubmit={submit} style={{ maxWidth: '720px', margin: '0 auto' }}>
+          <div style={{ ...card, display: 'flex', alignItems: 'flex-end', gap: '8px', padding: '8px' }}>
+            <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)}
+              onKeyDown={onKey} placeholder="def binary_search(arr, target):"
               rows={1}
-              className="flex-1 bg-transparent px-4 py-3 text-sm text-gray-200 placeholder-gray-600 resize-none outline-none font-mono"
-              style={{ maxHeight: '120px' }}
-            />
-            <button
-              type="submit"
-              disabled={loading || !input.trim()}
-              className="p-3 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:scale-105 transition-transform flex-shrink-0"
-            >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+              style={{
+                flex: 1, backgroundColor: 'transparent', padding: '10px 14px',
+                fontSize: '14px', color: '#ccc', resize: 'none', outline: 'none',
+                border: 'none', fontFamily: "'JetBrains Mono', monospace",
+                maxHeight: '100px', lineHeight: 1.6,
+              }} />
+            <button type="submit" disabled={loading || !input.trim()}
+              style={{
+                padding: '10px', backgroundColor: '#22c55e', color: '#000',
+                borderRadius: '8px', border: 'none', cursor: 'pointer',
+                opacity: loading || !input.trim() ? 0.2 : 1,
+                flexShrink: 0, fontSize: '14px',
+              }}>
+              {loading ? '...' : '↑'}
             </button>
           </div>
-          <p className="text-xs text-gray-600 mt-2 text-center">
-            {apiConnected 
-              ? 'Connected to inference server — generating live responses' 
-              : 'Demo mode — showing pre-generated code samples. Run api/serve.py for live inference.'}
+          <p style={{ fontSize: '11px', color: '#525252', marginTop: '8px', textAlign: 'center' }}>
+            {apiConnected ? 'connected to local inference server' : 'demo mode — run api/serve.py for live inference'}
           </p>
         </form>
       </div>

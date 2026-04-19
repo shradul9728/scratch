@@ -1,226 +1,177 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ArrowRight, Brain, Code2, Cpu, Layers, Zap, Box } from 'lucide-react';
-
-const features = [
-  {
-    icon: <Layers size={24} />,
-    title: 'Transformer Architecture',
-    description: 'Multi-Head Attention, Feed-Forward Networks, and Pre-Norm residual connections — all from scratch.',
-  },
-  {
-    icon: <Brain size={24} />,
-    title: 'Mixture of Experts',
-    description: 'Sparse MoE layers with top-k routing and load-balancing loss for efficient scaling.',
-  },
-  {
-    icon: <Code2 size={24} />,
-    title: 'Trained on Python Code',
-    description: '49M parameters trained on 122MB of Python source code across 50,000 GPU steps.',
-  },
-  {
-    icon: <Cpu size={24} />,
-    title: 'GPU Accelerated',
-    description: 'Mixed precision (FP16) training with gradient accumulation on NVIDIA RTX GPUs.',
-  },
-  {
-    icon: <Zap size={24} />,
-    title: 'BPE Tokenization',
-    description: 'Sub-word tokenization via tiktoken (cl100k_base) for efficient code representation.',
-  },
-  {
-    icon: <Box size={24} />,
-    title: 'DPO Alignment',
-    description: 'Direct Preference Optimization pipeline for aligning model outputs with human preferences.',
-  },
-];
-
-const stats = [
-  { value: '49.2M', label: 'Parameters' },
-  { value: '50K', label: 'Training Steps' },
-  { value: '122MB', label: 'Code Dataset' },
-  { value: '76', label: 'Tasks Completed' },
-];
 
 const codeSnippet = `class GPT(nn.Module):
-    def __init__(self, vocab_size, d_model=384,
-                 n_heads=6, n_layers=6):
+    def __init__(self, vocab_size, d_model, n_heads, n_layers):
         super().__init__()
-        self.token_emb = TokenEmbedding(vocab_size, d_model)
-        self.pos_emb = PositionalEmbedding(block_size, d_model)
+        self.token_emb = nn.Embedding(vocab_size, d_model)
+        self.pos_emb = nn.Embedding(block_size, d_model)
         self.blocks = nn.ModuleList([
             TransformerBlock(d_model, n_heads)
             for _ in range(n_layers)
         ])
+        self.ln_f = nn.LayerNorm(d_model)
         self.lm_head = nn.Linear(d_model, vocab_size)`;
 
 export default function HomePage() {
   return (
-    <div className="animated-gradient">
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-        {/* Floating particles */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 rounded-full bg-cyan-400/30"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animation: `float ${3 + Math.random() * 4}s ease-in-out infinite`,
-                animationDelay: `${Math.random() * 3}s`,
-              }}
-            />
+    <div style={{ maxWidth: '720px', margin: '0 auto', padding: '0 24px' }}>
+
+      {/* Hero */}
+      <section style={{ paddingTop: '80px', paddingBottom: '64px' }}>
+        <h1 style={{ fontSize: '40px', fontWeight: 700, marginBottom: '16px', color: '#fff' }}>
+          scratch
+        </h1>
+        <p style={{ fontSize: '17px', lineHeight: 1.8, color: '#a3a3a3', maxWidth: '560px', marginBottom: '32px' }}>
+          A GPT model written from scratch in PyTorch. 49 million parameters,
+          trained on 122MB of Python source code. No HuggingFace, no pretrained
+          weights. Every layer written by hand.
+        </p>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <Link
+            href="/playground"
+            style={{
+              padding: '10px 20px', backgroundColor: '#22c55e', color: '#000',
+              fontSize: '14px', fontWeight: 600, borderRadius: '8px', textDecoration: 'none',
+            }}
+          >
+            Try it
+          </Link>
+          <a
+            href="https://github.com/shradul9728/scratch"
+            target="_blank" rel="noreferrer"
+            style={{
+              padding: '10px 20px', border: '1px solid #333', color: '#a3a3a3',
+              fontSize: '14px', fontWeight: 500, borderRadius: '8px', textDecoration: 'none',
+            }}
+          >
+            Source code
+          </a>
+        </div>
+      </section>
+
+      {/* What it is */}
+      <section style={{ paddingTop: '48px', paddingBottom: '48px', borderTop: '1px solid #1e1e1e' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '20px', color: '#fff' }}>
+          What this is
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '15px', lineHeight: 1.8, color: '#a3a3a3' }}>
+          <p>
+            This is a decoder-only Transformer — the same architecture behind GPT-2, GPT-3,
+            and most LLMs. The difference is that every component is implemented from first
+            principles: attention, embeddings, feed-forward layers, the training loop, the
+            tokenizer integration.
+          </p>
+          <p>
+            It&apos;s not a production model. It&apos;s 49M parameters (GPT-2 small is 124M, GPT-3
+            is 175B). It was trained for 4 hours on a single RTX 4060 laptop GPU. It can
+            generate code-like patterns but it doesn&apos;t understand logic.
+          </p>
+          <p>
+            The point is the code itself — seeing how attention works, how loss drops over
+            50K steps, how BPE tokenization handles Python syntax.
+          </p>
+        </div>
+      </section>
+
+      {/* Numbers */}
+      <section style={{ paddingTop: '48px', paddingBottom: '48px', borderTop: '1px solid #1e1e1e' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '24px', color: '#fff' }}>
+          Numbers
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
+          {[
+            { value: '49.2M', label: 'parameters' },
+            { value: '50,000', label: 'training steps' },
+            { value: '122MB', label: 'code dataset' },
+            { value: '~4.3h', label: 'training time' },
+          ].map((stat) => (
+            <div key={stat.label}>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: '#fff' }}>{stat.value}</div>
+              <div style={{ fontSize: '13px', color: '#525252', marginTop: '4px' }}>{stat.label}</div>
+            </div>
           ))}
         </div>
-
-        <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-cyan-400 mb-8">
-              <Zap size={14} />
-              <span>Built from scratch with PyTorch</span>
-            </div>
-
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 leading-tight">
-              Meet{' '}
-              <span className="gradient-text">Scratch</span>
-            </h1>
-
-            <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              A complete GPT Transformer model built entirely from scratch. 
-              No HuggingFace, no shortcuts — pure neural architecture with 
-              49.2 million parameters trained on Python code.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/playground"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold text-lg hover:scale-105 transition-transform shadow-lg shadow-cyan-500/25"
-              >
-                Try Playground
-                <ArrowRight size={20} />
-              </Link>
-              <Link
-                href="/architecture"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-white/10 text-gray-300 font-semibold text-lg hover:border-cyan-400/50 hover:text-white transition-all"
-              >
-                View Architecture
-              </Link>
-            </div>
-          </motion.div>
-
-          {/* Code preview */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="mt-16 max-w-2xl mx-auto"
-          >
-            <div className="glass rounded-2xl overflow-hidden glow-border">
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
-                <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                <div className="w-3 h-3 rounded-full bg-green-500/80" />
-                <span className="text-xs text-gray-500 ml-2 font-mono">models/gpt.py</span>
-              </div>
-              <pre className="p-6 text-left text-sm font-mono text-gray-300 overflow-x-auto leading-relaxed">
-                <code>{codeSnippet}</code>
-              </pre>
-            </div>
-          </motion.div>
-        </div>
       </section>
 
-      {/* Stats Bar */}
-      <section className="border-y border-white/5 py-8">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                viewport={{ once: true }}
-                className="text-center"
-              >
-                <div className="text-3xl md:text-4xl font-black gradient-text mb-1">{stat.value}</div>
-                <div className="text-sm text-gray-500">{stat.label}</div>
-              </motion.div>
-            ))}
+      {/* Code */}
+      <section style={{ paddingTop: '48px', paddingBottom: '48px', borderTop: '1px solid #1e1e1e' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '8px', color: '#fff' }}>
+          What it looks like
+        </h2>
+        <p style={{ fontSize: '14px', color: '#525252', marginBottom: '16px' }}>
+          The full model definition. This is the actual code.
+        </p>
+        <div style={{ backgroundColor: '#141414', border: '1px solid #1e1e1e', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ padding: '10px 16px', borderBottom: '1px solid #1e1e1e', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#333' }} />
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#333' }} />
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#333' }} />
+            <span style={{ fontSize: '12px', color: '#525252', fontFamily: "'JetBrains Mono', monospace", marginLeft: '8px' }}>
+              models/gpt.py
+            </span>
           </div>
+          <pre style={{
+            padding: '20px', fontSize: '13px', fontFamily: "'JetBrains Mono', monospace",
+            color: '#a3a3a3', overflowX: 'auto', lineHeight: 1.7, margin: 0,
+          }}>
+            <code>{codeSnippet}</code>
+          </pre>
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section className="py-24">
-        <div className="max-w-7xl mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">
-              Built with <span className="gradient-text">precision</span>
-            </h2>
-            <p className="text-gray-500 text-lg max-w-xl mx-auto">
-              Every component of the Transformer — from attention to alignment — implemented and tested from first principles.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, i) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                viewport={{ once: true }}
-                className="glass rounded-2xl p-6 hover:border-cyan-400/20 transition-all duration-300 group cursor-default"
-              >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center text-cyan-400 mb-4 group-hover:scale-110 transition-transform">
-                  {feature.icon}
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
+      {/* Repo contents */}
+      <section style={{ paddingTop: '48px', paddingBottom: '48px', borderTop: '1px solid #1e1e1e' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '24px', color: '#fff' }}>
+          What&apos;s in the repo
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {[
+            { name: 'models/', desc: 'Attention, FFN, MoE, RoPE, Transformer block, full GPT — 7 files' },
+            { name: 'utils/', desc: 'Config loader, data pipeline, BPE tokenizer, dataset, training — 5 files' },
+            { name: 'tests/', desc: '56 unit tests covering every module' },
+            { name: 'train.py', desc: 'Training loop with FP16 mixed precision and gradient accumulation' },
+            { name: 'api/serve.py', desc: 'FastAPI server for model inference' },
+            { name: 'web/', desc: 'This website — Next.js, deployed on Vercel' },
+            { name: 'finetune_sft.py', desc: 'Supervised fine-tuning script' },
+            { name: 'finetune_dpo.py', desc: 'Direct Preference Optimization alignment' },
+          ].map((item) => (
+            <div key={item.name} style={{ display: 'flex', gap: '16px', fontSize: '14px', lineHeight: 1.6 }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", color: '#22c55e', width: '140px', flexShrink: 0, fontSize: '13px' }}>
+                {item.name}
+              </span>
+              <span style={{ color: '#737373' }}>{item.desc}</span>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="glass rounded-3xl p-12 glow-border"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Ready to explore?
-            </h2>
-            <p className="text-gray-400 mb-8 text-lg">
-              Jump into the playground and see what a 49M parameter model trained on Python code can generate.
-            </p>
-            <Link
-              href="/playground"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold text-lg hover:scale-105 transition-transform shadow-lg shadow-cyan-500/25"
-            >
-              Open Playground
-              <ArrowRight size={20} />
-            </Link>
-          </motion.div>
+      {/* Training result */}
+      <section style={{ paddingTop: '48px', paddingBottom: '48px', borderTop: '1px solid #1e1e1e' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '12px', color: '#fff' }}>
+          Training result
+        </h2>
+        <p style={{ fontSize: '15px', color: '#a3a3a3', marginBottom: '24px', lineHeight: 1.8 }}>
+          Loss dropped from 11.59 to 1.94 over 50K steps. Validation loss landed at 2.07.
+          The model learned Python syntax — indentation, function signatures, class structures —
+          but doesn&apos;t produce correct logic. That&apos;s expected at this scale.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+          {[
+            { label: 'train loss', value: '1.94' },
+            { label: 'val loss', value: '2.07' },
+            { label: 'gpu', value: '4060' },
+          ].map((item) => (
+            <div key={item.label} style={{ backgroundColor: '#141414', border: '1px solid #1e1e1e', borderRadius: '10px', padding: '16px' }}>
+              <div style={{ fontSize: '12px', color: '#525252', marginBottom: '4px' }}>{item.label}</div>
+              <div style={{ fontSize: '24px', fontWeight: 700, color: '#fff' }}>{item.value}</div>
+            </div>
+          ))}
         </div>
+        <Link href="/training" style={{ display: 'inline-block', marginTop: '16px', fontSize: '14px', color: '#22c55e' }}>
+          Full training metrics →
+        </Link>
       </section>
     </div>
   );

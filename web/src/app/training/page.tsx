@@ -1,8 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { TrendingDown, Clock, Cpu, Database, Gauge, BarChart3 } from 'lucide-react';
-
 const trainingData = [
   { step: 0, train: 11.59, val: 11.59 },
   { step: 5000, train: 2.64, val: 2.78 },
@@ -17,214 +14,158 @@ const trainingData = [
   { step: 50000, train: 1.94, val: 2.07 },
 ];
 
-const trainingConfig = [
-  { icon: <Cpu size={18} />, label: 'GPU', value: 'NVIDIA RTX 4060 (8GB)' },
-  { icon: <Clock size={18} />, label: 'Training Time', value: '~4.3 hours' },
-  { icon: <Database size={18} />, label: 'Dataset', value: '122MB Python code' },
-  { icon: <BarChart3 size={18} />, label: 'Total Steps', value: '50,000' },
-  { icon: <Gauge size={18} />, label: 'Batch Size', value: '8 × 4 accum = 32' },
-  { icon: <TrendingDown size={18} />, label: 'Final Val Loss', value: '2.07' },
-];
-
-const hyperparams = [
-  { param: 'Learning Rate', value: '6e-4 → 6e-5 (cosine)' },
-  { param: 'Warmup Steps', value: '500' },
-  { param: 'Weight Decay', value: '0.1' },
-  { param: 'Betas', value: '(0.9, 0.95)' },
-  { param: 'Grad Clip', value: '1.0' },
-  { param: 'Dropout', value: '0.1' },
-  { param: 'Precision', value: 'FP16 (AMP)' },
-  { param: 'Tokenizer', value: 'BPE (tiktoken cl100k)' },
-  { param: 'Context Length', value: '256 tokens' },
-  { param: 'Optimizer', value: 'AdamW (decoupled)' },
-];
+const card: React.CSSProperties = {
+  backgroundColor: '#141414', border: '1px solid #1e1e1e', borderRadius: '10px', padding: '16px',
+};
 
 function LossChart() {
-  const maxLoss = 12;
-  const chartH = 300;
-  const chartW = 700;
-  const padL = 60;
-  const padB = 40;
-  const padT = 20;
-  const padR = 20;
-  const w = chartW - padL - padR;
-  const h = chartH - padT - padB;
-
+  const maxLoss = 12, chartH = 260, chartW = 640;
+  const padL = 40, padB = 30, padT = 10, padR = 10;
+  const w = chartW - padL - padR, h = chartH - padT - padB;
   const toX = (step: number) => padL + (step / 50000) * w;
   const toY = (loss: number) => padT + (1 - loss / maxLoss) * h;
-
-  const trainPath = trainingData
-    .map((d, i) => `${i === 0 ? 'M' : 'L'} ${toX(d.step)} ${toY(d.train)}`)
-    .join(' ');
-  const valPath = trainingData
-    .map((d, i) => `${i === 0 ? 'M' : 'L'} ${toX(d.step)} ${toY(d.val)}`)
-    .join(' ');
+  const trainPath = trainingData.map((d, i) => `${i === 0 ? 'M' : 'L'} ${toX(d.step)} ${toY(d.train)}`).join(' ');
+  const valPath = trainingData.map((d, i) => `${i === 0 ? 'M' : 'L'} ${toX(d.step)} ${toY(d.val)}`).join(' ');
 
   return (
-    <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full" style={{ maxHeight: '360px' }}>
-      {/* Grid lines */}
+    <svg viewBox={`0 0 ${chartW} ${chartH}`} style={{ width: '100%' }}>
       {[0, 2, 4, 6, 8, 10, 12].map((v) => (
         <g key={v}>
-          <line x1={padL} y1={toY(v)} x2={chartW - padR} y2={toY(v)} stroke="rgba(255,255,255,0.05)" />
-          <text x={padL - 10} y={toY(v) + 4} textAnchor="end" fill="#555" fontSize="11">{v}</text>
+          <line x1={padL} y1={toY(v)} x2={chartW - padR} y2={toY(v)} stroke="#1e1e1e" />
+          <text x={padL - 8} y={toY(v) + 4} textAnchor="end" fill="#525252" fontSize="10">{v}</text>
         </g>
       ))}
       {[0, 10000, 20000, 30000, 40000, 50000].map((s) => (
-        <text key={s} x={toX(s)} y={chartH - 10} textAnchor="middle" fill="#555" fontSize="11">{s / 1000}k</text>
+        <text key={s} x={toX(s)} y={chartH - 6} textAnchor="middle" fill="#525252" fontSize="10">{s / 1000}k</text>
       ))}
-
-      {/* Lines */}
-      <path d={trainPath} fill="none" stroke="url(#trainGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={valPath} fill="none" stroke="url(#valGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="6 3" />
-
-      {/* Dots */}
+      <path d={trainPath} fill="none" stroke="#22c55e" strokeWidth="2" />
+      <path d={valPath} fill="none" stroke="#525252" strokeWidth="2" strokeDasharray="4 2" />
       {trainingData.map((d) => (
         <g key={d.step}>
-          <circle cx={toX(d.step)} cy={toY(d.train)} r="3" fill="#00d4ff" />
-          <circle cx={toX(d.step)} cy={toY(d.val)} r="3" fill="#a855f7" />
+          <circle cx={toX(d.step)} cy={toY(d.train)} r="2.5" fill="#22c55e" />
+          <circle cx={toX(d.step)} cy={toY(d.val)} r="2.5" fill="#525252" />
         </g>
       ))}
-
-      {/* Gradients */}
-      <defs>
-        <linearGradient id="trainGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#00d4ff" />
-          <stop offset="100%" stopColor="#06b6d4" />
-        </linearGradient>
-        <linearGradient id="valGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#a855f7" />
-          <stop offset="100%" stopColor="#ec4899" />
-        </linearGradient>
-      </defs>
-
-      {/* Legend */}
-      <circle cx={chartW - 150} cy={padT + 10} r="4" fill="#00d4ff" />
-      <text x={chartW - 140} y={padT + 14} fill="#aaa" fontSize="12">Train Loss</text>
-      <circle cx={chartW - 150} cy={padT + 30} r="4" fill="#a855f7" />
-      <text x={chartW - 140} y={padT + 34} fill="#aaa" fontSize="12">Val Loss</text>
+      <circle cx={chartW - 90} cy={padT + 8} r="3" fill="#22c55e" />
+      <text x={chartW - 82} y={padT + 12} fill="#999" fontSize="10">train</text>
+      <circle cx={chartW - 90} cy={padT + 24} r="3" fill="#525252" />
+      <text x={chartW - 82} y={padT + 28} fill="#999" fontSize="10">val</text>
     </svg>
   );
 }
 
 export default function TrainingPage() {
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <section className="py-16 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              <span className="gradient-text">Training</span>
-            </h1>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              50,000 steps on 122MB of Python code using an NVIDIA RTX 4060 with mixed precision training.
-            </p>
-          </motion.div>
-        </div>
+    <div style={{ maxWidth: '720px', margin: '0 auto', padding: '0 24px' }}>
+
+      <section style={{ paddingTop: '80px', paddingBottom: '48px' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '8px', color: '#fff' }}>Training</h1>
+        <p style={{ fontSize: '15px', color: '#737373' }}>
+          50,000 steps on 122MB of Python source code. Single RTX 4060, FP16, ~4.3 hours.
+        </p>
       </section>
 
-      {/* Training Config Cards */}
-      <section className="px-6 pb-12">
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-4">
-          {trainingConfig.map((item, i) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              viewport={{ once: true }}
-              className="glass rounded-xl p-4"
-            >
-              <div className="flex items-center gap-2 text-cyan-400 mb-2">
-                {item.icon}
-                <span className="text-xs text-gray-500 uppercase tracking-wider">{item.label}</span>
-              </div>
-              <div className="text-lg font-semibold">{item.value}</div>
-            </motion.div>
+      {/* Setup cards */}
+      <section style={{ paddingBottom: '48px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+          {[
+            ['gpu', 'RTX 4060 (8GB)'],
+            ['time', '~4.3 hours'],
+            ['dataset', '122MB Python'],
+            ['steps', '50,000'],
+            ['batch', '8 × 4 accum'],
+            ['val loss', '2.07'],
+          ].map(([k, v]) => (
+            <div key={k} style={card}>
+              <div style={{ fontSize: '10px', color: '#525252', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{k}</div>
+              <div style={{ fontSize: '15px', fontWeight: 600, marginTop: '4px', color: '#fff' }}>{v}</div>
+            </div>
           ))}
         </div>
       </section>
 
-      {/* Loss Chart */}
-      <section className="px-6 pb-16">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="glass rounded-2xl p-8"
-          >
-            <h2 className="text-2xl font-bold mb-6">Loss Curve</h2>
-            <LossChart />
-          </motion.div>
+      {/* Chart */}
+      <section style={{ paddingTop: '48px', paddingBottom: '48px', borderTop: '1px solid #1e1e1e' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '16px', color: '#fff' }}>Loss curve</h2>
+        <div style={{ ...card, padding: '20px' }}>
+          <LossChart />
         </div>
       </section>
 
-      {/* Hyperparameters Table */}
-      <section className="px-6 pb-16">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="glass rounded-2xl p-8"
-          >
-            <h2 className="text-2xl font-bold mb-6">Hyperparameters</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
-              {hyperparams.map((hp) => (
-                <div key={hp.param} className="flex items-center justify-between py-2 border-b border-white/5">
-                  <span className="text-gray-400 text-sm">{hp.param}</span>
-                  <span className="text-sm font-mono text-cyan-400">{hp.value}</span>
-                </div>
+      {/* Hyperparameters */}
+      <section style={{ paddingTop: '48px', paddingBottom: '48px', borderTop: '1px solid #1e1e1e' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '16px', color: '#fff' }}>Hyperparameters</h2>
+        <div style={{ backgroundColor: '#141414', border: '1px solid #1e1e1e', borderRadius: '10px', overflow: 'hidden' }}>
+          {[
+            ['learning rate', '6e-4 → 6e-5 (cosine)'],
+            ['warmup', '500 steps'],
+            ['weight decay', '0.1'],
+            ['optimizer', 'AdamW (β1=0.9, β2=0.95)'],
+            ['grad clip', '1.0'],
+            ['dropout', '0.1'],
+            ['precision', 'FP16 (torch.amp)'],
+            ['tokenizer', 'tiktoken cl100k_base'],
+          ].map(([k, v], i) => (
+            <div key={k} style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '12px 16px', fontSize: '14px',
+              borderTop: i > 0 ? '1px solid #1a1a1a' : 'none',
+            }}>
+              <span style={{ color: '#737373' }}>{k}</span>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", color: '#22c55e', fontSize: '12px' }}>{v}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Step table */}
+      <section style={{ paddingTop: '48px', paddingBottom: '48px', borderTop: '1px solid #1e1e1e' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '16px', color: '#fff' }}>Step by step</h2>
+        <div style={{ backgroundColor: '#141414', border: '1px solid #1e1e1e', borderRadius: '10px', overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #1e1e1e' }}>
+                {['step', 'train', 'val', 'delta'].map((h) => (
+                  <th key={h} style={{ textAlign: 'left', padding: '10px 16px', color: '#525252', fontWeight: 500, fontSize: '12px' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {trainingData.map((d, i) => (
+                <tr key={d.step} style={{ borderTop: i > 0 ? '1px solid #1a1a1a' : 'none' }}>
+                  <td style={{ padding: '8px 16px', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px' }}>
+                    {d.step.toLocaleString()}
+                  </td>
+                  <td style={{ padding: '8px 16px', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', color: '#22c55e' }}>
+                    {d.train.toFixed(2)}
+                  </td>
+                  <td style={{ padding: '8px 16px', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', color: '#a3a3a3' }}>
+                    {d.val.toFixed(2)}
+                  </td>
+                  <td style={{ padding: '8px 16px', fontSize: '12px' }}>
+                    {i > 0 && (
+                      <span style={{ color: d.val < trainingData[i-1].val ? '#22c55e' : '#525252' }}>
+                        {d.val < trainingData[i-1].val ? '↓' : '↑'}{Math.abs(d.val - trainingData[i-1].val).toFixed(2)}
+                      </span>
+                    )}
+                  </td>
+                </tr>
               ))}
-            </div>
-          </motion.div>
+            </tbody>
+          </table>
         </div>
       </section>
 
-      {/* Training Steps Table */}
-      <section className="px-6 pb-16">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="glass rounded-2xl p-8"
-          >
-            <h2 className="text-2xl font-bold mb-6">Training Progress</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left py-3 px-4 text-gray-400 font-medium">Step</th>
-                    <th className="text-left py-3 px-4 text-gray-400 font-medium">Train Loss</th>
-                    <th className="text-left py-3 px-4 text-gray-400 font-medium">Val Loss</th>
-                    <th className="text-left py-3 px-4 text-gray-400 font-medium">Improvement</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {trainingData.map((d, i) => (
-                    <tr key={d.step} className="border-b border-white/5 hover:bg-white/2">
-                      <td className="py-3 px-4 font-mono">{d.step.toLocaleString()}</td>
-                      <td className="py-3 px-4 font-mono text-cyan-400">{d.train.toFixed(2)}</td>
-                      <td className="py-3 px-4 font-mono text-purple-400">{d.val.toFixed(2)}</td>
-                      <td className="py-3 px-4">
-                        {i > 0 && (
-                          <span className={`text-xs px-2 py-1 rounded ${
-                            d.val < trainingData[i-1].val 
-                              ? 'bg-green-500/10 text-green-400'
-                              : 'bg-red-500/10 text-red-400'
-                          }`}>
-                            {d.val < trainingData[i-1].val ? '↓' : '↑'} {Math.abs(d.val - trainingData[i-1].val).toFixed(2)}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </motion.div>
+      {/* Honest note */}
+      <section style={{ paddingTop: '48px', paddingBottom: '48px', borderTop: '1px solid #1e1e1e' }}>
+        <div style={{ ...card, fontSize: '14px', color: '#737373', lineHeight: 1.8 }}>
+          <p style={{ fontWeight: 600, color: '#a3a3a3', marginBottom: '8px' }}>What this means</p>
+          <p>
+            The model learned Python syntax — indentation, colons, parentheses, function/class
+            patterns. But at 49M parameters with 256-token context, it doesn&apos;t produce logically
+            correct code. It repeats patterns and generates plausible-looking but incorrect logic.
+            That&apos;s normal for a model this size.
+          </p>
         </div>
       </section>
     </div>

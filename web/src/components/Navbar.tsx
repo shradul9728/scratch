@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Menu, X, Sparkles } from 'lucide-react';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -14,70 +13,52 @@ const navLinks = [
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Sparkles size={18} className="text-white" />
-          </div>
-          <span className="text-xl font-bold gradient-text">Scratch</span>
+    <nav style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+      backgroundColor: '#0a0a0a', borderBottom: '1px solid #1e1e1e',
+    }}>
+      <div style={{
+        maxWidth: '720px', margin: '0 auto', padding: '0 24px',
+        height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      }}>
+        <Link href="/" style={{ fontSize: '16px', fontWeight: 600, color: '#fff', textDecoration: 'none' }}>
+          scratch
         </Link>
 
-        {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-1">
+        {/* Desktop */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+          className="hidden md:flex">
           {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                pathname === link.href
-                  ? 'text-cyan-400 bg-cyan-400/10'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
-            >
+            <Link key={link.href} href={link.href} style={{
+              padding: '6px 14px', borderRadius: '6px', fontSize: '14px',
+              color: pathname === link.href ? '#22c55e' : '#737373',
+              textDecoration: 'none',
+            }}>
               {link.label}
             </Link>
           ))}
         </div>
 
-        {/* GitHub link */}
-        <div className="hidden md:flex items-center gap-3">
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noreferrer"
-            className="px-4 py-2 rounded-lg text-sm font-medium border border-white/10 text-gray-300 hover:border-cyan-400/50 hover:text-cyan-400 transition-all"
-          >
-            GitHub
-          </a>
-        </div>
-
         {/* Mobile toggle */}
-        <button
-          className="md:hidden text-gray-400 hover:text-white"
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
-          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+        <button onClick={() => setOpen(!open)} className="md:hidden"
+          style={{ color: '#737373', background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px' }}>
+          {open ? '✕' : '☰'}
         </button>
       </div>
 
       {/* Mobile menu */}
-      {mobileOpen && (
-        <div className="md:hidden glass border-t border-white/5 px-6 py-4 space-y-1">
+      {open && (
+        <div style={{ borderTop: '1px solid #1e1e1e', padding: '12px 24px', backgroundColor: '#0a0a0a' }}
+          className="md:hidden">
           {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setMobileOpen(false)}
-              className={`block px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                pathname === link.href
-                  ? 'text-cyan-400 bg-cyan-400/10'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
-            >
+            <Link key={link.href} href={link.href} onClick={() => setOpen(false)} style={{
+              display: 'block', padding: '10px 0', fontSize: '14px',
+              color: pathname === link.href ? '#22c55e' : '#737373',
+              textDecoration: 'none',
+            }}>
               {link.label}
             </Link>
           ))}

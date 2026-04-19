@@ -5,8 +5,7 @@ import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "Scratch — GPT From Scratch",
-  description: "A complete GPT Transformer model built from scratch using PyTorch. Explore the architecture, train on code, and interact with the model.",
-  keywords: ["GPT", "Transformer", "PyTorch", "AI", "Machine Learning", "LLM", "From Scratch"],
+  description: "A 49.2M parameter GPT model built from scratch with PyTorch. Trained on Python code.",
 };
 
 export default function RootLayout({
@@ -16,9 +15,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
+      <body>
         <Navbar />
-        <main className="pt-16 min-h-screen">
+        <main style={{ paddingTop: '56px', minHeight: '100vh' }}>
           {children}
         </main>
         <Footer />
