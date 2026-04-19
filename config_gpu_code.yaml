@@ -1,0 +1,52 @@
+# ============================================================
+# GPU Config — Code Training on RTX 4060 (8GB VRAM)
+# Memory-optimized: smaller batch + gradient accumulation
+# ============================================================
+
+# --- Data ---
+data:
+  dataset_path: "data/raw/code.txt"
+  tokenizer: "bpe"
+  block_size: 256
+
+# --- Model ---
+model:
+  vocab_size: null
+  d_model: 384
+  n_heads: 6
+  n_layers: 6
+  dropout: 0.1
+  bias: false
+  use_rope: false
+  use_gqa: false
+  n_kv_heads: null
+  use_moe: false
+  n_experts: 8
+  top_k_experts: 2
+  use_flash_attention: false
+
+# --- Training ---
+training:
+  batch_size: 8                 # small batch to fit VRAM
+  grad_accum_steps: 4           # effective batch = 8*4 = 32
+  max_iters: 50000
+  learning_rate: 6.0e-4
+  min_lr: 6.0e-5
+  weight_decay: 0.1
+  beta1: 0.9
+  beta2: 0.95
+  grad_clip: 1.0
+  warmup_iters: 500
+  eval_interval: 1000
+  eval_iters: 20
+  save_interval: 5000
+  checkpoint_dir: "checkpoints/code"
+  log_wandb: false
+  wandb_project: "gpt-code"
+  use_amp: true                 # mixed precision (FP16) to save VRAM
+
+# --- Generation ---
+generation:
+  max_new_tokens: 300
+  temperature: 0.7
+  top_k: 50

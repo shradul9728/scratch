@@ -1,0 +1,49 @@
+# ============================================================
+# CPU-Friendly Config — smaller model, fewer steps
+# ============================================================
+
+# --- Data ---
+data:
+  dataset_path: "data/raw/input.txt"
+  tokenizer: "char"
+  block_size: 64
+
+# --- Model ---
+model:
+  vocab_size: null
+  d_model: 128
+  n_heads: 4
+  n_layers: 4
+  dropout: 0.1
+  bias: false
+  use_rope: false
+  use_gqa: false
+  n_kv_heads: null
+  use_moe: false
+  n_experts: 8
+  top_k_experts: 2
+  use_flash_attention: false
+
+# --- Training ---
+training:
+  batch_size: 32
+  max_iters: 500
+  learning_rate: 1.0e-3
+  min_lr: 1.0e-4
+  weight_decay: 0.1
+  beta1: 0.9
+  beta2: 0.99
+  grad_clip: 1.0
+  warmup_iters: 20
+  eval_interval: 50
+  eval_iters: 10
+  save_interval: 250
+  checkpoint_dir: "checkpoints"
+  log_wandb: false
+  wandb_project: "gpt-from-scratch"
+
+# --- Generation ---
+generation:
+  max_new_tokens: 200
+  temperature: 0.8
+  top_k: 40

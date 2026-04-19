@@ -1,0 +1,49 @@
+# ============================================================
+# Hyperparameter Configuration for GPT From Scratch
+# ============================================================
+
+# --- Data ---
+data:
+  dataset_path: "data/raw/input.txt"
+  tokenizer: "char"            # "char" or "bpe"
+  block_size: 256              # context length (max sequence length)
+
+# --- Model ---
+model:
+  vocab_size: null              # auto-populated from tokenizer
+  d_model: 384                  # embedding dimension
+  n_heads: 6                    # number of attention heads
+  n_layers: 6                   # number of transformer blocks
+  dropout: 0.2                  # dropout probability
+  bias: false                   # use bias in Linear layers and LayerNorm
+  use_rope: false               # use Rotary Positional Embeddings
+  use_gqa: false                # use Grouped Query Attention
+  n_kv_heads: null              # number of KV heads for GQA (defaults to n_heads)
+  use_moe: false                # use Mixture-of-Experts FFN
+  n_experts: 8                  # number of experts in MoE
+  top_k_experts: 2              # number of experts to route each token to
+  use_flash_attention: false    # use FlashAttention if available
+
+# --- Training ---
+training:
+  batch_size: 64
+  max_iters: 5000
+  learning_rate: 3.0e-4
+  min_lr: 3.0e-5
+  weight_decay: 0.1
+  beta1: 0.9
+  beta2: 0.95
+  grad_clip: 1.0
+  warmup_iters: 100
+  eval_interval: 250
+  eval_iters: 200
+  save_interval: 1000
+  checkpoint_dir: "checkpoints"
+  log_wandb: false
+  wandb_project: "gpt-from-scratch"
+
+# --- Generation ---
+generation:
+  max_new_tokens: 500
+  temperature: 0.8
+  top_k: 200
