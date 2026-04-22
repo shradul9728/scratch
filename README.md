@@ -17,7 +17,7 @@
 
 ## 🎯 What is Scratch?
 
-Scratch is an educational + functional implementation of a GPT (Generative Pre-trained Transformer) model, built from absolute zero. Every component — from attention mechanisms to alignment — is implemented by hand.
+Scratch is an educational + functional implementation of a GPT (Generative Pre-trained Transformer) model, built from absolute zero.
 
 ### ✨ Features
 
